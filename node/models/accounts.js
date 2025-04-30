@@ -22,4 +22,4 @@ const accountModel = new aMONGOOSE.Schema({
     },
 })
 
-module.exports = aMONGOOSE.model("Quiz",accountModel)
+module.exports = aMONGOOSE.model("User",accountModel)

@@ -10,11 +10,11 @@ require("dotenv").config()
 app.use(cors())
 app.use(express.json())
 app.use("/frontend",express.static("./public"))
-app.use("/api/v1/tasks", router)
+app.use("/api", router)
 app.use(notFound) 
 app.use(handler) 
  
-var port = process.env.PORT | 3000 
+var port = process.env.PORT || 3000 
          
 async function start(){
     try{

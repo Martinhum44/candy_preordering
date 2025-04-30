@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useRef } from 'react'
 import styles from './user.module.css';
 import QrCodeGenerator from './QrCodeGenerator';
 
@@ -6,9 +6,11 @@ import QrCodeGenerator from './QrCodeGenerator';
 const App: React.FC = () => {
     const [PIN, setPIN] = useState<string>("")
     const [name, setName] = useState<string>("")
-    const [state, setState] = useState<"creation">("creation")
+    const [state, setState] = useState<"creation" | "created" | "login">("creation")
     const [disabled, setDisabled] = useState<boolean>(true)
     const [conf, setConf] = useState<boolean>(true)
+    const [loginPIN, setLoginPIN] = useState<string>("")
+    const [loginAccNumber, setLoginAccNumber] = useState<string>("")
     
     const nameRef = useRef<HTMLInputElement>(null)
     const PINRef = useRef<HTMLInputElement>(null)
@@ -19,7 +21,7 @@ const App: React.FC = () => {
     async function create() {
         console.log(document.getElementById("gen_button"))
 
-        const res = await fetch("http://localhost:3000/create", {
+        const res = await fetch("http://localhost:3000/api/create-account", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -34,7 +36,8 @@ const App: React.FC = () => {
 
         if (json.success) {
             alert(json.msg)
-            setState("creation")
+            setState("created")
+            console.log(json)
         } else {
             alert(json.msg)
         }
@@ -68,6 +71,16 @@ const App: React.FC = () => {
                     codeRef.current = text;
                 }}/>
                 <button onClick={create} style={{ marginTop: "10px" }} className={styles.gray} disabled={conf} ref={confirmCreateWalletRef}>Confirm create wallet</button>
+                <div style={{marginTop: "10px"}}>
+                    <button onClick={() => setState("login")} style={{display: "inline-block", width: "75px", height: "30px", fontSize: "12px", marginRight: "10px"}} className={styles.blue}>Log in</button>
+                    <button onClick={() => setState("creation")} style={{display: "inline-block", width: "120px", height: "30px", fontSize: "12px"}} className={styles.blue}>Create Account</button>
+                </div>
+            </div>
+            <div id="login" style={{ display: state === "login" ? "block" : "none" }}>
+                <h1>Log in to your FUNPARK wallet!</h1>
+                <input placeholder='Account Number' value={loginAccNumber} style={{ marginBottom: "10px", display: "block" }} onChange={(e) => { setLoginAccNumber(e.target.value) }} type="text" />
+                <input placeholder='Account PIN' value={loginPIN} style={{ marginBottom: "10px", display: "block" }} onChange={(e) => { setLoginPIN(e.target.value) }} type="text" />
+                <button onClick={() => setState("login")} style={{display: "inline-block", marginRight: "10px"}} className={styles.blue}>Log in</button>
             </div>
         </div>
     )
