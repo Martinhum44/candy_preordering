@@ -1,12 +1,33 @@
-import React, { useState, useRef } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import styles from './user.module.css';
 import QrCodeGenerator from './QrCodeGenerator';
+import { Html5QrcodeScanner } from 'html5-qrcode';
+import { QRCodeSVG } from "qrcode.react"
 
+type Account = {
+    name: string,
+    pin: string,
+    id: string,
+    balance: number
+}
+
+type JsonResultAccount = {
+    msg: string
+    account: Account
+    success: boolean
+    error: undefined
+} | {
+    msg: string
+    success: boolean
+    account: undefined
+    error: string | undefined
+}
 
 const App: React.FC = () => {
     const [PIN, setPIN] = useState<string>("")
+    const [scan, setScan] = useState<boolean>(false)
     const [name, setName] = useState<string>("")
-    const [state, setState] = useState<"creation" | "created" | "login">("creation")
+    const [state, setState] = useState<"creation" | "logged-in" | "login">("creation")
     const [disabled, setDisabled] = useState<boolean>(true)
     const [conf, setConf] = useState<boolean>(true)
     const [loginPIN, setLoginPIN] = useState<string>("")
@@ -17,6 +38,22 @@ const App: React.FC = () => {
     const codeRef = useRef<string>(null)
     const accountGeneratedRef = useRef<HTMLHeadingElement>(null)
     const confirmCreateWalletRef = useRef<HTMLButtonElement>(null)
+    const [accData, setAccData] = useState<Account | undefined>()
+
+    useEffect(() => {
+        const scanner = new Html5QrcodeScanner("reader", {
+            qrbox: { width: 250, height: 250 },
+            fps: 5,
+        }, false)
+    
+        scanner.render((data) => {
+            alert("Account number scanned: "+data)
+            setLoginAccNumber(data)
+            setScan(false)
+        }, (err) => {
+            console.error(err)
+        })
+    }, [])
 
     async function create() {
         console.log(document.getElementById("gen_button"))
@@ -32,12 +69,12 @@ const App: React.FC = () => {
                 id: codeRef.current
             })
         })
-        const json = await res.json()
+        const json: JsonResultAccount = await res.json()
 
         if (json.success) {
             alert(json.msg)
-            setState("created")
-            console.log(json)
+            setState("logged-in")
+            setAccData(json.account)
         } else {
             alert(json.msg)
         }
@@ -71,16 +108,53 @@ const App: React.FC = () => {
                     codeRef.current = text;
                 }}/>
                 <button onClick={create} style={{ marginTop: "10px" }} className={styles.gray} disabled={conf} ref={confirmCreateWalletRef}>Confirm create wallet</button>
-                <div style={{marginTop: "10px"}}>
-                    <button onClick={() => setState("login")} style={{display: "inline-block", width: "75px", height: "30px", fontSize: "12px", marginRight: "10px"}} className={styles.blue}>Log in</button>
-                    <button onClick={() => setState("creation")} style={{display: "inline-block", width: "120px", height: "30px", fontSize: "12px"}} className={styles.blue}>Create Account</button>
-                </div>
             </div>
-            <div id="login" style={{ display: state === "login" ? "block" : "none" }}>
+            <div id="login" style={{ display: state === "login" ? "flex" : "none", flexDirection: "column", alignItems: "center"}}>
                 <h1>Log in to your FUNPARK wallet!</h1>
+                <button onClick={() => setScan(!scan)} style={{ marginBottom: "10px" }} className={styles.blue}>{!scan ? "Scan Account QR" : "Stop Scanning"}</button>
+                <div style={{display: scan ? "block" : "none", marginTop: "10px", marginBottom: "10px"}}>
+                    <h3>Scan QR for account number</h3>
+                    <div id="reader" style={{ width: "100%" }}></div>
+                </div>
                 <input placeholder='Account Number' value={loginAccNumber} style={{ marginBottom: "10px", display: "block" }} onChange={(e) => { setLoginAccNumber(e.target.value) }} type="text" />
                 <input placeholder='Account PIN' value={loginPIN} style={{ marginBottom: "10px", display: "block" }} onChange={(e) => { setLoginPIN(e.target.value) }} type="text" />
-                <button onClick={() => setState("login")} style={{display: "inline-block", marginRight: "10px"}} className={styles.blue}>Log in</button>
+                <button onClick={async() => { 
+                    const res = await fetch(`http://localhost:3000/api/get-account/${loginAccNumber}/${loginPIN}`)
+                    const json: JsonResultAccount = await res.json()
+                    if(!json.success) {
+                        return alert(json.error)
+                    }
+                    setAccData(json.account)
+                    setState("logged-in");
+                }} style={{display: "inline-block", marginRight: "10px"}} disabled={loginPIN.length != 4 || loginAccNumber.length != 30 ? true: false} className={loginPIN.length != 4 || loginAccNumber.length != 30 ? styles.gray: styles.blue}>Log in</button>
+            </div>
+            <div id="logged-in" style={{ display: state === "logged-in" ? "flex" : "none", flexDirection: "column", alignItems: "center"}}>
+                <h1>Welcome {accData && accData.name}</h1>
+                <div
+                    id="qr"
+                    style={{
+                        display: "none",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        borderRadius: "10px",
+                        height: "350px",
+                        width: "200px",
+                        backgroundColor: "lightgray",
+                        flexDirection: "column",
+                        textAlign: "center",
+                        overflowX: "scroll"
+                    }}
+                >
+                    <h2 style={{ display: "block" }}>QR</h2>
+                    <QRCodeSVG size={128} value={accData && accData.id} />
+                    <h3>Name: {accData && accData.name}</h3>
+                    <h3>Balance: ${accData && accData.balance}</h3>
+                    <h6>ID: {accData && accData.id}</h6>
+                </div>
+            </div>
+            <div style={{marginTop: "10px", display: state === "creation" || state === "login" ? "block" : "none"}}>
+                    <button onClick={() => setState("login")} style={{display: "inline-block", width: "75px", height: "30px", fontSize: "12px", marginRight: "10px"}} className={styles.blue}>Log in</button>
+                    <button style={{display: "inline-block", width: "120px", height: "30px", fontSize: "12px", marginRight: "10px"}} onClick={() => {window.location.reload()}} className={styles.blue}>Create account</button>
             </div>
         </div>
     )

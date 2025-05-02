@@ -3,7 +3,6 @@ button {
     height: 50px;
     font-size: large;
     border: none;
-    color: white;
 }
 
 body {
@@ -16,6 +15,10 @@ h1 {
 
 button.blue {
     background-color: #007bff;
+}
+
+button.blue, button.gray{
+    color: white;
 }
 
 button.gray {
