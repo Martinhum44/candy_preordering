@@ -51,7 +51,7 @@ const App: React.FC = () => {
             setLoginAccNumber(data)
             setScan(false)
         }, (err) => {
-            console.error(err)
+            //console.error(err)
         })
     }, [])
 
@@ -119,10 +119,13 @@ const App: React.FC = () => {
                 <input placeholder='Account Number' value={loginAccNumber} style={{ marginBottom: "10px", display: "block" }} onChange={(e) => { setLoginAccNumber(e.target.value) }} type="text" />
                 <input placeholder='Account PIN' value={loginPIN} style={{ marginBottom: "10px", display: "block" }} onChange={(e) => { setLoginPIN(e.target.value) }} type="text" />
                 <button onClick={async() => { 
+                    console.log(loginAccNumber, loginPIN)
                     const res = await fetch(`http://localhost:3000/api/get-account/${loginAccNumber}/${loginPIN}`)
                     const json: JsonResultAccount = await res.json()
                     if(!json.success) {
-                        return alert(json.error)
+                        console.log(json)
+                        console.log(json.error)
+                        return alert(json.msg) 
                     }
                     setAccData(json.account)
                     setState("logged-in");

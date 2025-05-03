@@ -22,10 +22,10 @@ module.exports = {
 
     getAccount: asyncWrapper(async(req, res) => {
         const {ID, PIN} = req.params
-        const acc = accountModel.findOne({id: ID, pin: PIN})
+        const acc = await accountModel.findOne({id: ID, pin: PIN})
 
         if(!acc) {
-            throw new OurErrorVersion(404, `Wallet ID ${ID} with PIN ${PIN} not found`)
+            throw new OurErrorVersion(`Wallet ID ${ID} with PIN ${PIN} not found`, 404)
         }
 
         res.status(200).json({account: acc, msg: "Account get successful", success: true})

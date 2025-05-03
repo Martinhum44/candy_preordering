@@ -1,4 +1,4 @@
 module.exports = (req, res) => {
     console.log(req.url)
-    res.status(404).sendFile(__dirname.slice(0,__dirname.length-11)+"/nf.html")
+    res.status(404).sendFile(__dirname.slice(0,__dirname.length-11)+"/nf.html").json({success: false, msg: "peeeee"})
 }        
