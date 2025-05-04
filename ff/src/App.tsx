@@ -136,7 +136,7 @@ const App: React.FC = () => {
                 <div
                     id="qr"
                     style={{
-                        display: "none",
+                        display: "block",
                         alignItems: "center",
                         justifyContent: "center",
                         borderRadius: "10px",
