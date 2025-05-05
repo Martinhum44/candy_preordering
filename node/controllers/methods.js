@@ -1,6 +1,7 @@
 const asyncWrapper = require("../middleware/asyncwrapper"); 
 const accountModel = require("../models/accounts.js")
 const {OurErrorVersion} = require("../middleware/error.js")
+const bcrypt = require("bcrypt")
 
 module.exports = {
     createAccount: asyncWrapper(async(req, res) => {
@@ -10,25 +11,29 @@ module.exports = {
             throw new OurErrorVersion("Please provide all values", 400);
         }
 
-        await accountModel.create({ name, pin, id, balance: 0 });
+        const new_pin = await bcrypt.hash(pin, 10)
+
+        await accountModel.create({ name, id, pin: new_pin, balance: 0 });
 
         res.status(200).json({ account: {
             name,
-            pin,
+            pin: new_pin,
             id,
             balance: 0
         }, msg: "Account created successfully", success:true });
     }),
 
     getAccount: asyncWrapper(async(req, res) => {
-        const {ID, PIN} = req.params
-        const acc = await accountModel.findOne({id: ID, pin: PIN})
+        const {ID, PIN: pin_plain} = req.body
+        const {id, balance, name, pin_hash} = await accountModel.findOne({id: ID})
 
-        if(!acc) {
-            throw new OurErrorVersion(`Wallet ID ${ID} with PIN ${PIN} not found`, 404)
+        console.log(name, id, balance, pin_hash, await bcrypt.compare(pin_plain, pin_hash))
+
+        if(!name || !id || !balance || !pin_hash || !await bcrypt.compare(pin_plain, pin_hash)) {
+            throw new OurErrorVersion(`Wallet ID ${ID} with PIN ${pin_plain} not found`, 404)
         }
 
-        res.status(200).json({account: acc, msg: "Account get successful", success: true})
+        res.status(200).json({account: {id, balance, name}, msg: "Account get successful", success: true})
     }),
 
     searchAccount: asyncWrapper((req, res) => {

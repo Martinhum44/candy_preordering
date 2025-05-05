@@ -12,8 +12,6 @@ const accountModel = new aMONGOOSE.Schema({
     },
     pin:{
         type: String,
-        minlength: [4, "PIN must be 4 characters"],
-        maxlength: [4, "PIN must be 4 characters"],
         required: [true, "PIN was not provided"],
     },
     balance:{

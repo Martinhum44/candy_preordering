@@ -6,7 +6,6 @@ import { QRCodeSVG } from "qrcode.react"
 
 type Account = {
     name: string,
-    pin: string,
     id: string,
     balance: number
 }
@@ -120,7 +119,11 @@ const App: React.FC = () => {
                 <input placeholder='Account PIN' value={loginPIN} style={{ marginBottom: "10px", display: "block" }} onChange={(e) => { setLoginPIN(e.target.value) }} type="text" />
                 <button onClick={async() => { 
                     console.log(loginAccNumber, loginPIN)
-                    const res = await fetch(`http://localhost:3000/api/get-account/${loginAccNumber}/${loginPIN}`)
+                    const res = await fetch(`http://localhost:3000/api/get-account/`, {
+                        method: "POST",
+                        headers: {"Content-Type": "application/json"},
+                        body: JSON.stringify({PIN: loginPIN, ID: loginAccNumber})
+                    })
                     const json: JsonResultAccount = await res.json()
                     if(!json.success) {
                         console.log(json)
