@@ -77,6 +77,8 @@ class CSVFile:
       return self.headers
     
     def repeats_per_item_in_column(self, column: str) -> dict[str: int]:
+      if column not in self.headers:
+        raise KeyError(f"Column {column} not in headers")
       col = self.get_column(column)
       repeats = dict()
       for i in col:
@@ -88,6 +90,10 @@ class CSVFile:
       return repeats
 
     def map_two_columns(self, key_column:str, value_column:str) -> list[tuple[str, str]]:
+      if key_column not in self.headers:
+        raise KeyError(f"Column {key_column} not in headers")
+      if value_column not in self.headers:
+        raise KeyError(f"Column {value_column} not in headers")
       key = self.get_column(key_column)
       value = self.get_column(value_column)
       return list(zip(key, value))
